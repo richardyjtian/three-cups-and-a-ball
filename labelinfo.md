@@ -12,8 +12,13 @@ IsInside: Indicates a picture taken from the inside of the object (e.g., a car i
 Ryan's labelling scheme:
 
 0: cup
+
 1: cupo - cup, IsOccult
+
 2: cupt - cup, IsTruncated
+
 3: cupot - cup, IsOccult, IsTruncated
+
 4: ball
+
 5: ballo - ball, IsOccult

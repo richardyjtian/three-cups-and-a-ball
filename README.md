@@ -2,15 +2,15 @@
 
 To run YOLO stuff:
 
-# 0. Split Train and Test Images (Optional)
+0. Split Train and Test Images (Optional)
 cd YOLO
 python3 splitTrainAndTest.py
 
-# 1. Make darknet
+1. Make darknet
 cd ../darknet
 make
 
-# 2. Run darknet
+2. Run darknet
 ./darknet detector train ../YOLO/darknet.data ../YOLO/darknet-yolov3.cfg ./darknet53.conv.74
 
 ###### Debugging #####

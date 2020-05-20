@@ -1,6 +1,6 @@
 # threecupsoneball
 
-## To run YOLO stuff:
+## To run YOLO stuff (adapted from <a href="https://www.learnopencv.com/training-yolov3-deep-learning-based-custom-object-detector/):" target="_blank">this tutorial</a>):
 
 ### 0. Split Train and Test Images (Optional)
 `cd YOLO`  

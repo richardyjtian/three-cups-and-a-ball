@@ -6,11 +6,14 @@
 `cd YOLO`  
 `python3 splitTrainAndTest.py`
 
-### 1. Make darknet
+### 1. Install awscli
+`sudo pip3 install awscli` 
+
+### 2. Compile darknet
 `cd ../darknet`  
 `make`
 
-### 2. Run darknet
+### 3. Run darknet
 `./darknet detector train ../YOLO/darknet.data ../YOLO/darknet-yolov3.cfg ./darknet53.conv.74`
 
 ## Debugging

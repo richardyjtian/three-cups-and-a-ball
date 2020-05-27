@@ -1,6 +1,6 @@
-classes = 6
-train  = /Users/Justin/Desktop/threecupsoneball/YOLO/train.txt
-valid  = /Users/Justin/Desktop/threecupsoneball/YOLO/test.txt
-names = /Users/Justin/Desktop/threecupsoneball/YOLO/classes.names
-backup = /Users/Justin/Desktop/threecupsoneball/
+classes = 2
+train  = /threecupsoneball/YOLO/train.txt
+valid  = /threecupsoneball/YOLO/test.txt
+names = /threecupsoneball/YOLO/classes.names
+backup = /threecupsoneball/
 

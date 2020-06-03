@@ -111,12 +111,12 @@ def postprocess(frame, outs):
 
 if __name__ == "__main__":
     # Open the video file
-    cap = cv.VideoCapture("three_cups_and_a_ball.mp4")
+    cap = cv.VideoCapture("src/three_cups_and_a_ball.mp4")
     # Get the video writer initialized to save the output video
-    outputFile = "three_cups_and_a_ball_out.avi"
+    outputFile = "src/three_cups_and_a_ball_out.avi"
     vid_writer = cv.VideoWriter(outputFile, cv.VideoWriter_fourcc('M','J','P','G'), 30, (round(cap.get(cv.CAP_PROP_FRAME_WIDTH)),round(cap.get(cv.CAP_PROP_FRAME_HEIGHT))))
 
-    # Run object recognition every 10 frames (to speed up processing)
+    # Run object recognition every 5 frames (to speed up processing)
     frameCount = 0
 
     # Read the first frame
@@ -137,7 +137,7 @@ if __name__ == "__main__":
             break
         
         # If not tracking yet, use object recognition
-        if startTracking == False and frameCount % 10 == 0:
+        if startTracking == False and frameCount % 5 == 0:
             # Create a 4D blob from a frame.
             blob = cv.dnn.blobFromImage(frame, 1/255, (inpWidth, inpHeight), [0,0,0], 1, crop=False)
             # Sets the input to the network

@@ -1,0 +1,2 @@
+*.weights filter=lfs diff=lfs merge=lfs -text
+Main/YOLO/darknet-yolov3_3000.weights filter=lfs diff=lfs merge=lfs -text

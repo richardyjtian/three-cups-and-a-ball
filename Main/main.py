@@ -27,7 +27,6 @@ net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)
 net.setPreferableTarget(cv.dnn.DNN_TARGET_CPU)
 
 # Used to indicate when to start tracking the cup
-startTracking = False
 tracking = False
 
 # Location of the ball
@@ -41,7 +40,6 @@ def drawBoundingBox(frame, bbox):
     # bbox is (x, y, w, h)
     x, y, w, h = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
     cv.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 0), 2, 1)
-    cv.putText(frame, "Object Tracking", (10, 50), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
 # Get the names of the output layers
 def getOutputsNames(net):
@@ -52,7 +50,7 @@ def getOutputsNames(net):
 
 # Remove the bounding boxes with low confidence using non-maxima suppression
 def postprocess(frame, outs):
-    global startTracking, tracking, ballPreviouslyFound, ballBbox, possibleCupBboxes
+    global tracking, ballPreviouslyFound, ballBbox, possibleCupBboxes
     frameHeight = frame.shape[0]
     frameWidth = frame.shape[1]
 
@@ -106,29 +104,37 @@ def postprocess(frame, outs):
         # drawPred(classIds[i], confidences[i], left, top, left + width, top + height)
 
     # Ball has disappeared
-    if ballFound == False and ballPreviouslyFound == True:
-        startTracking = True
+    if not ballFound and ballPreviouslyFound:
+        tracking = True
+
+fileName = "1"
 
 if __name__ == "__main__":
     # Open the video file
-    cap = cv.VideoCapture("src/three_cups_and_a_ball.mp4")
+    cap = cv.VideoCapture("src/" + fileName + ".mp4")
     # Get the video writer initialized to save the output video
-    outputFile = "src/three_cups_and_a_ball_out.avi"
+    outputFile = "src/" + fileName + "_out.avi"
     vid_writer = cv.VideoWriter(outputFile, cv.VideoWriter_fourcc('M','J','P','G'), 30, (round(cap.get(cv.CAP_PROP_FRAME_WIDTH)),round(cap.get(cv.CAP_PROP_FRAME_HEIGHT))))
 
     # Run object recognition every 5 frames (to speed up processing)
     frameCount = 0
 
     # Read the first frame
-    success, frame = cap.read()
-    # Create a CSRT tracking object
-    # KCF
+    success, currFrame = cap.read()
+    prevFrame = currFrame
+
+    # Create a KCF tracking object
     tracker = cv.TrackerKCF_create()
+    trackingSetup = False
+    cupFound = False
+    bbox = None
+    gameOver = False
 
     while True:
-        # Read a frame
-        success, frame = cap.read()
+        # Read a new frame
+        success, currFrame = cap.read()
         frameCount += 1
+
         # Stop the program if reached end of video
         if not success:
             print("Done processing !!!")
@@ -136,20 +142,22 @@ if __name__ == "__main__":
             cv.waitKey(3000)
             break
         
-        # If not tracking yet, use object recognition
-        if startTracking == False and frameCount % 5 == 0:
+        # If not tracking yet, use object recognition and 
+        # process every 5 frames to check if the ball has disappeared into a cup
+        if not tracking and frameCount % 5 == 0:
             # Create a 4D blob from a frame.
-            blob = cv.dnn.blobFromImage(frame, 1/255, (inpWidth, inpHeight), [0,0,0], 1, crop=False)
+            blob = cv.dnn.blobFromImage(currFrame, 1/255, (inpWidth, inpHeight), [0,0,0], 1, crop=False)
             # Sets the input to the network
             net.setInput(blob)
             # Runs the forward pass to get output of the output layers
             outs = net.forward(getOutputsNames(net))
             # Remove the bounding boxes with low confidence
-            postprocess(frame, outs)
+            postprocess(currFrame, outs)
 
-        elif startTracking == True:
+        # Else if tracking, track the cup every frame
+        elif tracking:
             # Setup tracking
-            if tracking == False:
+            if not trackingSetup:
                 ballx = ballBbox[0] + ballBbox[2] / 2
                 for possibleCupBbox in possibleCupBboxes:
                     cupx1 = possibleCupBbox[0]
@@ -157,22 +165,41 @@ if __name__ == "__main__":
                     # If ball was last seen in a cup
                     if cupx1 < ballx and cupx2 > ballx:
                         bbox = possibleCupBbox
-                        tracking = True
-                        tracker.init(frame, bbox)
+                        tracker.init(currFrame, bbox)
+                        cupFound = True
                         break
+                trackingSetup = True
 
-            # Track the cup
-            success, bbox = tracker.update(frame)
-
-            # Tracker is still tracking the object
-            if success:
-                drawBoundingBox(frame, bbox)
+            # If we found a cup during the tracking setup
+            if cupFound:
+                # Game is over when no motion (or no difference between frames)
+                diff = cv.absdiff(prevFrame, currFrame)
+                # gray = cv.cvtColor(diff, cv.COLOR_BGR2GRAY)
+                # # currFrame = gray
+                # if cv.countNonZero(gray) < 30:
+                print(np.sum(diff))
+                if np.sum(diff) < 2000:
+                    gameOver = True
+                # When the game is over, it's over for the rest of the video
+                if gameOver:
+                    drawBoundingBox(currFrame, bbox)
+                    cv.putText(currFrame, "Ball Is Located Here!", (10, 50), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                # While the game is not over, continue tracking the ball
+                else:
+                    prevFrame = currFrame.copy()
+                    # Track the cup
+                    success, bbox = tracker.update(currFrame)
+                    cv.putText(currFrame, "Tracking Cup", (10, 50), cv.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+                    # If tracker is still tracking the object
+                    if success:
+                        drawBoundingBox(currFrame, bbox)
             else:
-                cv.putText(frame, "Object Lost", (10, 50), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                cv.putText(currFrame, "Could Not Find Cup", (10, 50), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
-        # Show image
-        cv.imshow("Object Tracker", frame)
-        vid_writer.write(frame.astype(np.uint8))
+        # Display frame
+        cv.imshow("Three Cups and a Ball", currFrame)
+        # Write frame to video
+        vid_writer.write(currFrame.astype(np.uint8))
 
         # Quit when press Q key
         if cv.waitKey(1) & 0xff == ord('q'):

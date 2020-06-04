@@ -164,6 +164,7 @@ while cv.waitKey(1) < 0:
     #cv.putText(frame, label, (0, 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
 
     # Write the frame with the detection boxes
+    cv.imshow("Program", frame)
     if (args.image):
         cv.imwrite(outputFile, frame.astype(np.uint8))
     else:

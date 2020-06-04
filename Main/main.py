@@ -101,17 +101,20 @@ def postprocess(frame, outs):
             ballFound = True
             ballPreviouslyFound = True
             ballBbox = (left, top, width, height)
+        # drawBoundingBox(frame, (left, top, width, height))
         # drawPred(classIds[i], confidences[i], left, top, left + width, top + height)
 
     # Ball has disappeared
     if not ballFound and ballPreviouslyFound:
         tracking = True
 
-fileName = "1"
+fileName = "three_cups_video"
 
 if __name__ == "__main__":
     # Open the video file
     cap = cv.VideoCapture("src/" + fileName + ".mp4")
+    # UNCOMMENT THIS TO SWITCH TO WEBCAM INPUT
+    # cap = cv.VideoCapture(0)
     # Get the video writer initialized to save the output video
     outputFile = "src/" + fileName + "_out.avi"
     vid_writer = cv.VideoWriter(outputFile, cv.VideoWriter_fourcc('M','J','P','G'), 30, (round(cap.get(cv.CAP_PROP_FRAME_WIDTH)),round(cap.get(cv.CAP_PROP_FRAME_HEIGHT))))
@@ -122,6 +125,7 @@ if __name__ == "__main__":
     # Read the first frame
     success, currFrame = cap.read()
     prevFrame = currFrame
+    prevCount = 0
 
     # Create a KCF tracking object
     tracker = cv.TrackerKCF_create()
@@ -174,11 +178,8 @@ if __name__ == "__main__":
             if cupFound:
                 # Game is over when no motion (or no difference between frames)
                 diff = cv.absdiff(prevFrame, currFrame)
-                # gray = cv.cvtColor(diff, cv.COLOR_BGR2GRAY)
-                # # currFrame = gray
-                # if cv.countNonZero(gray) < 30:
-                print(np.sum(diff))
-                if np.sum(diff) < 2000:
+                count = np.sum(diff)
+                if abs(count - prevCount) < 2000:
                     gameOver = True
                 # When the game is over, it's over for the rest of the video
                 if gameOver:
@@ -187,6 +188,7 @@ if __name__ == "__main__":
                 # While the game is not over, continue tracking the ball
                 else:
                     prevFrame = currFrame.copy()
+                    prevCount = count
                     # Track the cup
                     success, bbox = tracker.update(currFrame)
                     cv.putText(currFrame, "Tracking Cup", (10, 50), cv.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
